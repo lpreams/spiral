@@ -1,0 +1,134 @@
+<html>
+<body>
+<canvas id="flowercanvas"></canvas>
+<style>
+body {
+  background-color: black;
+}
+</style>
+<script>
+
+/*********** init **************/
+
+const ctx = document.getElementById("flowercanvas").getContext("2d");
+
+ctx.canvas.width  = window.innerWidth;
+ctx.canvas.height = window.innerHeight;
+
+const WIDTH = window.innerWidth;
+const HEIGHT = window.innerHeight;
+
+const MOVE = 2.0; // how far to move each seed from the center on each frame
+const GROW = 0.1; // how much to grow each seed on each frame
+const ROT_SPEED = 0.0001; // how much to increase the rotation on each frame
+const MAX_DIST = Math.sqrt(WIDTH*WIDTH/4 + HEIGHT*HEIGHT/4)+20.0;
+
+let ROT = 0.0; // amount of added rotation per frame
+let rot = 0.0; // current rotation
+
+let seeds = [];
+let icol = 0; // index in rainbow[]
+
+let rainbow = [];
+{ // only pretty colors
+    let red = 255;
+    let green = 0;
+    let blue = 0;
+    rainbow.push(toRGB(red, green, blue));
+    while (green < 255) rainbow.push(toRGB(red, ++green, blue));
+    while (red > 0) rainbow.push(toRGB(--red, green, blue));
+    while (blue < 255) rainbow.push(toRGB(red, green, ++blue));
+    while (green > 0) rainbow.push(toRGB(red, --green, blue));
+    while (red < 255) rainbow.push(toRGB(++red, green, blue));
+    while (blue > 0) rainbow.push(toRGB(red, green, --blue));
+}
+
+//linearly map a value from one range to another
+function map(value, start1, stop1, start2, stop2) {
+    return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
+}
+
+// generate HTML color string from rgb values
+function toRGB(red,green,blue) {
+   let r = red.toString(16).padStart(2,'0');
+   let g = green.toString(16).padStart(2,'0');
+   let b = blue.toString(16).padStart(2,'0');
+
+   return "#" + r + g + b;
+}
+
+// generate a new seed with the specified rotation and color
+function newSeed(rotns, colns) {
+  let s = {};
+
+  s.rot = rotns;
+  s.col = colns;
+  s.radius = 0.0;
+  s.size = 5.0;
+  let rdns = map(rotns,0.0,1.0,0.0,2*Math.PI);
+  s.radians = rdns;
+  s.x = (0.0 * Math.cos(rdns))+WIDTH/2;
+  s.y = (0.0 * Math.sin(rdns))+HEIGHT/2;
+
+  return s;
+}
+
+// move the specified seed further out from the center and grow it a little bit, and actually draw it to the canvas
+function grow(s) {
+  seeds[s].radius += MOVE;
+  seeds[s].size += GROW;
+  seeds[s].x = (seeds[s].radius * Math.cos(seeds[s].radians))+WIDTH/2;
+  seeds[s].y = (seeds[s].radius * Math.sin(seeds[s].radians))+HEIGHT/2;
+  ctx.beginPath();
+  ctx.arc(seeds[s].x,seeds[s].y,seeds[s].size/2,0,2*Math.PI);
+  ctx.fillStyle = seeds[s].col;
+  ctx.fill();
+}
+
+// test whether the specified seed has gone off screen
+function shouldRemoveSeed(s) {
+  let x = seeds[s].x;
+  let y = seeds[s].y;
+  let size = seeds[s].size;
+  if (x < -size/2.0) return true;
+  if (y < -size/2.0) return true;
+  if (x > WIDTH + size/2.0) return true;
+  if (y > HEIGHT + size/2.0) return true;
+  return false;
+}
+
+function drawFrame() {
+  ROT += ROT_SPEED; // rotate a bit more this frame than last frame
+  while (rot > 1.0) rot -= 1.0; // if we rotated all the way around, reset to zero
+  while (ROT > 1.0) ROT -= 1.0; // if we rotated all the way around, reset to zero
+
+  // new frame, so blank out the previous frame
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0,0,WIDTH,HEIGHT);
+
+  seeds.push(newSeed(rot,rainbow[icol])); // make a new seed
+
+  // next color in the rainbow
+  icol+=10;
+  while(icol>=rainbow.length) icol-=rainbow.length;
+
+  for(let s=0; s<seeds.length; ++s) grow(s); // grow all the seeds that exist
+
+  rot += ROT; // rotate
+
+  // remove any seeds that have gone off screen, otherwise we'll run out of memory eventually
+  for (let s=0; s<seeds.length; ++s) {
+    if (shouldRemoveSeed(s)) {
+      seeds.splice(s,1);
+      --s;
+    }
+  }
+
+  requestAnimationFrame(drawFrame); // next frame
+}
+
+drawFrame(); // start animation
+
+</script>
+</body>
+</html>
