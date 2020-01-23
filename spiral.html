@@ -18,9 +18,9 @@ ctx.canvas.height = window.innerHeight;
 const WIDTH = window.innerWidth;
 const HEIGHT = window.innerHeight;
 
-const MOVE = 2.0; // how far to move each seed from the center on each frame
-const GROW = 0.1; // how much to grow each seed on each frame
-const ROT_SPEED = 0.0001; // how much to increase the rotation on each frame
+let MOVE = 2.0; // how far to move each seed from the center on each frame
+let GROW = 0.1; // how much to grow each seed on each frame
+let ROT_SPEED = 0.0001; // how much to increase the rotation on each frame
 const MAX_DIST = Math.sqrt(WIDTH*WIDTH/4 + HEIGHT*HEIGHT/4)+20.0;
 
 let ROT = 0.0; // amount of added rotation per frame
